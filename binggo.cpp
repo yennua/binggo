@@ -1,17 +1,16 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
-#include <iostream>
+#include <bangtal>
+using namespace bangtal;
 
+#include <iostream>
 using namespace std;
 
-
-#include <stdio.h>
-#include <time.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <ctime>
 
 //게임 판 랜덤 생성
-void random(int comBoard[5][5], int myBoard[5][5]);
+void random(int board[5][5]);
 //게임판 2개가 비슷한지 확인
 bool check(int comBoard[5][5], int myBoard[5][5]);
 //선택한 숫자가 이미 선택된 숫자인지 확인
@@ -25,108 +24,155 @@ int compare(const void* a, const void* b);
 //컴퓨터 숫자 선택 알고리즘
 int comChoice(int board[5][5], char check[5][5]);
 
-int main()
-{
+//게임 시작 함수
+void play_game();
+
+
+
+ScenePtr scene1, scene2, scene3;
+ObjectPtr com_board[5][5], my_board[5][5];
+ObjectPtr start, restart;
+ObjectPtr set1, set2;
+SoundPtr num[25];
+
+int main() {
+    setGameOption(GameOption::GAME_OPTION_MESSAGE_BOX_BUTTON, false);
+    setGameOption(GameOption::GAME_OPTION_INVENTORY_BUTTON, false);
+
+    scene1 = Scene::create("시작화면", "Images/배경.png");
+    //scene2 = Scene::create("게임 선택화면", "Images/select.png");
+    scene3 = Scene::create("게임화면", "Images/board.png");
+
+    start = Object::create("Images/start.png", scene1, 462, 124);
+    restart = Object::create("Images/restart.png", scene3, 462, 231);
+    restart->hide();
+
+    start->setOnMouseCallback([&](auto, auto, auto, auto)->bool {
+        scene3->enter();
+        return true;
+        });
+
+    restart->setOnMouseCallback([&](auto, auto, auto, auto)->bool {
+        scene1->enter();
+        return true;
+        });
+
+    scene3->setOnEnterCallback([](ScenePtr scene)->bool {
+        play_game();
+        return true;
+        });
+
+    startGame(scene1);
+
+    return 0;
+}
+
+int index_to_x(int who, int index) { //빙고판 버튼 x 위치 지정 함수
+    if (who == 1) {//나?
+        return 568 + 90 * index;
+    }
+    else return 45 + 90 * index; //컴퓨터?
+}
+
+int index_to_y(int index) {
+    return 403 - 90 * index;
+}
+
+void play_game() {
     int comBoard[5][5], myBoard[5][5];
     char comCheck[5][5] = { {0, } }, myCheck[5][5] = { {0, } };
     int result[2] = { 0, 0 };
     int comPlay, myPlay;
-    int count = 0;
+
+    SoundPtr ready = Sound::create("Sounds/준비 시작.mp3");
+
+    SoundPtr win = Sound::create("Sounds/게임클리어8.mp3");
+    SoundPtr drew = Sound::create("Sounds/까마귀.mp3");
+    SoundPtr lose = Sound::create("Sounds/야유.mp3");
+
+    ready->play(false);
 
     while (1) {
-        random(comBoard, myBoard);
-
+        random(comBoard);
+        random(myBoard);
         if (check(comBoard, myBoard)) break;
     }
 
-    cout << "빙고판이 생성되었습니다. \n게임시작!" << endl;
+    char path[20];
+    char msg[30];
 
-    while (1) {
-        binggo(comCheck, myCheck, result);
+    for (int i = 0; i < 25; i++) {
+        sprintf(path, "Sounds/%d.png", i);
+        num[i] = Sound::create(path);
+    }
+    cout << "초기화" << endl;
 
-        cout << "\n#" << count << "컴퓨터(왼쪽): " << result[0] << "줄 나(오른쪽) : " << result[1] <<"줄" << endl;
-        
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                
-                if (comCheck[i][j] == 1) cout << "(" << comBoard[i][j] << ")";
-                else  cout << "    ";
-            }
-            cout << "          ";
-            for (int j = 0; j < 5; j++) {
-                if (myCheck[i][j] == 1) cout << "(" << myBoard[i][j] << ")";
-                else cout << " " << myBoard[i][j] << " ";
-            }
-            cout << endl;
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            sprintf(path, "Images/%d.png", myBoard[i][j]);
+
+            my_board[i][j] = Object::create(path, scene3, index_to_x(1, j), index_to_y(i));
+            my_board[i][j]->setOnMouseCallback([&](auto piece, auto x, auto y, auto action)->bool {
+                if (checkPlay(myBoard, myCheck, myBoard[i][j])) {
+                    binggo(comCheck, myCheck, result);
+
+                    if (result[0] == 5) {
+                        if (result[1] == 5) {
+                            drew->play(false);
+                            showMessage("비겼습니다.");
+                        }
+                        else {
+                            lose->play(false);
+                            showMessage("컴퓨터가 이겼습니다...");
+                        }
+                    }
+                    else {
+                        win->play(false);
+                        showMessage("당신이 이겼습니다!");
+                    }
+
+                    sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
+                    showMessage(msg);
+
+                    sprintf(path, "Images/%d - 복사본.png", myBoard[i][j]);
+                    piece->setImage(path);
+                    num[myBoard[i][j]]->play(false);
+                    choice(comBoard, comCheck, myBoard[i][j]);
+
+                }
+                return true;
+                });
+
+            sprintf(path, "1.png");
+            com_board[i][j] = Object::create(path, scene3, index_to_x(0, j), index_to_y(i));
         }
-
-        if (result[0] == 5 || result[1] == 5) break;
-
-        if (count % 2 == 0) {
-            cout << "당신의 차례입니다. 몇 번을 열까요? ";
-            while (1) {
-                cin >> myPlay;
-                if (checkPlay(myBoard, myCheck, myPlay)) break;
-                else cout << "이미 열린 숫자입니다. 다시 선택해주세요." << endl;
-            }
-            choice(comBoard, comCheck, myPlay);
-        }
-
-        if (count % 2 == 1) {
-            comPlay = comChoice(comBoard, comCheck);
-
-            /*
-            while (1) {
-                comPlay = rand() % 25 + 1;
-                if (checkPlay(comBoard, comCheck, comPlay)) break;
-            }*/
-
-            choice(myBoard, myCheck, comPlay);
-            cout << "컴퓨터의 차례입니다. " << comPlay << "번을 선택했습니다." << endl;
-        }
-
-        count++;
     }
 
-    if (result[0] == 5) {
-        if (result[1] == 5) cout << "비겼습니다.";
-        else cout << "컴퓨터가 이겼습니다...";
-    }
-    else cout << "당신이 이겼습니다!";
 }
-
-void random(int comBoard[5][5], int myBoard[5][5]) {
+void random(int board[5][5]) {
     int randint[25] = { 0, }, a, flag;
     srand((unsigned int)time(NULL));
 
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 25; j++) {
-            //랜덤한 수 생성
-            while (1) {
-                flag = 0; //0이면 중복 없음
-                int k;
-                a = rand() % 25 + 1;
-                for (k = 0; k < j + 1; k++) {
-                    //printf("1 a: %d k: %d %d    ", a, k, randint[k]);
-                    //if (j == 24) break;
-                    if (randint[k] == a) {
-                        flag = 1;
-                    }
+    for (int i = 0; i < 25; i++) {
+        //랜덤한 수 생성
+        while (1) {
+            flag = 0; //0이면 중복 없음
+            a = rand() % 25 + 1;
+            for (int j = 0; j < i + 1; j++) {
+                if (randint[j] == a) {
+                    flag = 1;
                 }
-                if (flag == 0) break;
-                //printf("\n");
             }
-            //printf("\n j: %d a: %d \n\n", j, a);
-            randint[j] = a;
+            if (flag == 0) break;
         }
-        //생성한 수 배열에 삽입
-        int index = 0;
+        randint[i] = a;
+    }
+    //생성한 수 배열에 삽입
+    int index = 0;
+    for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
-            for (int k = 0; k < 5; k++) {
-                if (i == 0) comBoard[j][k] = randint[index];
-                else myBoard[j][k] = randint[index];
-                index++;
-            }
+            board[i][j] = randint[index];
+            index++;
         }
     }
 }
@@ -179,20 +225,7 @@ void choice(int board[5][5], char check[5][5], int play) {
 }
 
 void binggo(char comCheck[5][5], char myCheck[5][5], int result[2]) {
-    /*
-    printf("ㅡㅡㅡㅡㅡㅡㅡㅡㅡ프린트 판ㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n");
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            printf(" %c ", comCheck[i][j]);
-        }
-        printf("          ");
-        for (int j = 0; j < 5; j++) {
-            printf(" %c ", myCheck[i][j]);
-        }
-        printf("\n");
-    }
-    printf("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n");
-    */
+
     char myRow[5] = { 1, 1, 1, 1, 1 }, myCollum[5] = { 1, 1, 1, 1, 1 };
     char comRow[5] = { 1, 1, 1, 1, 1 }, comCollum[5] = { 1, 1, 1, 1, 1 };
     char myCross[2] = { 1, 1 }, comCross[2] = { 1, 1 };
