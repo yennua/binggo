@@ -63,9 +63,9 @@ int main() {
 
 int index_to_x(int who, int index) { //빙고판 버튼 x 위치 지정 함수
     if (who == 1) {//나라면,
-        return 568 + 89 * index;
+        return 568 + 89.5 * index;
     }
-    else return 45 + 89 * index; //컴퓨터면,
+    else return 45 + 89.5 * index; //컴퓨터면,
 }
 
 int index_to_y(int index) {
@@ -150,7 +150,7 @@ void play_game() { //게임의 메인이 되는 함수
 
             my_board[i][j]->setOnMouseCallback([&](auto piece, auto x, auto y, auto action)->bool {
                 int myPlay1 = game_value(piece);
-                printf("myPlay1: %d \n", myPlay1);
+                //printf("myPlay1: %d \n", myPlay1);
                 if (checkPlay(myBoard, myCheck, myPlay1)) {
                     for (int k = 0; k < 2; k++) {
                         char msg[100];
@@ -161,7 +161,7 @@ void play_game() { //게임의 메인이 되는 함수
                             a = game_index(comBoard, myPlay1);
                             choice(comBoard, comCheck, myPlay1, com_board[a / 10][a % 10]);
 
-                            printf("myPlay2: %d \n", myPlay1);
+                            printf("myPlay: %d \n", myPlay1);
                         }
                         else {
                             while (1) {
@@ -179,7 +179,7 @@ void play_game() { //게임의 메인이 되는 함수
                             a = game_index(comBoard, comPlay);
                             choice(comBoard, comCheck, comPlay, com_board[a / 10][a % 10]);
                         }
-                        printf("choice finish \n");
+                        //printf("choice finish \n");
 
                         /*
                         for (int i = 0; i < 5; i++) {
@@ -197,7 +197,7 @@ void play_game() { //게임의 메인이 되는 함수
                         */
 
                         binggo(comCheck, myCheck, result);
-                        printf("<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
+                        //printf("<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                         sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                         showMessage(msg);
 
@@ -209,7 +209,7 @@ void play_game() { //게임의 메인이 되는 함수
                         sprintf(path2, "Images/score_%d.png", result[1]);
                         me->setImage(path2);
                         */
-                        printf("binggo\n");
+                        //printf("binggo\n");
                         if (result[0] >= 5 || result[1] >= 5) {
                             game_end(result);
                             return true;
@@ -353,7 +353,7 @@ void choice(int board[5][5], char check[5][5], int play, ObjectPtr piece) {
 
     char path[50];
     sprintf(path, "Images/%d - 복사본.png", play);
-    printf("myPlay3: %d \n", play);
+    //printf("myPlay3: %d \n", play);
     piece->setImage(path);
 
     check[index[0]][index[1]] = 1;
@@ -425,9 +425,9 @@ int comChoice(int comBoard[5][5], char comCheck[5][5]) {
         randint = rand() % 2;
 
         for (int i = 0; i < 12; i++) {
-            printf("%d ", checklist[i]);
+            //printf("%d ", checklist[i]);
             int index = checklist[i] % 100;
-            printf("index: %d \n", index);
+            //printf("index: %d \n", index);
             switch (index) {
             case 10:
                 for (int j = 0; j < 5; j++) {
