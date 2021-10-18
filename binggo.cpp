@@ -44,28 +44,10 @@ int main() {
     scene3 = Scene::create("게임화면", "Images/board.png");
 
     start = Object::create("Images/start.png", scene1, 462, 124);
-    restart = Object::create("Images/restart.png", scene3, 462, 231);
-    restart->hide();
+    
 
     start->setOnMouseCallback([&](auto, auto, auto, auto)->bool {
         scene3->enter();
-        return true;
-        });
-
-    restart->setOnMouseCallback([&](auto, auto, auto, auto)->bool {
-        scene1->enter();
-        restart->hide();
-
-        //값 초기화
-        for (int i = 0; i < 5;i++) {
-            for (int j = 0; j < 5;j++) {
-                myCheck[i][j]=0;
-                comCheck[i][j] = 0;
-            }
-        }
-        result[0] = 0;
-        result[1] = 0;
-
         return true;
         });
 
@@ -80,10 +62,10 @@ int main() {
 }
 
 int index_to_x(int who, int index) { //빙고판 버튼 x 위치 지정 함수
-    if (who == 1) {//나?
-        return 568 + 90 * index;
+    if (who == 1) {//나라면,
+        return 568 + 89 * index;
     }
-    else return 45 + 90 * index; //컴퓨터?
+    else return 45 + 89 * index; //컴퓨터면,
 }
 
 int index_to_y(int index) {
@@ -96,7 +78,7 @@ char comCheck[5][5] = { {0, } }, myCheck[5][5] = { {0, } };
 int result[2] = { 0, 0 };
 int comPlay, myPlay;
 
-int game_value(ObjectPtr piece) {
+int game_value(ObjectPtr piece) { //피스 오브젝트에서 값을 뽑아내는 함수
     for (int i = 0; i < 5;i++) {
         for (int j = 0; j < 5;j++) {
             if (my_board[i][j] == piece) return myBoard[i][j];
@@ -106,7 +88,7 @@ int game_value(ObjectPtr piece) {
     return -1; //INVALID PIECE
 }
 
-int game_index(int board[5][5], int play) {
+int game_index(int board[5][5], int play) { //피스 오브젝트에서 인덱스를 뽑아내는 함수
     for (int i = 0; i < 5;i++) {
         for (int j = 0; j < 5;j++) {
             if (board[i][j] == play) return i*10+j;
@@ -115,7 +97,7 @@ int game_index(int board[5][5], int play) {
 
     return -1; //INVALID PIECE
 }
-void play_game() {
+void play_game() { //게임의 메인이 되는 함수
 
     SoundPtr ready1 = Sound::create("Sounds/준비.mp3");
     SoundPtr ready2 = Sound::create("Sounds/시작.mp3");
@@ -128,6 +110,9 @@ void play_game() {
         if (check(comBoard, myBoard)) break;
     }
 
+    
+
+    /* 프롬프트에 출력
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             if (comCheck[i][j] == 1) printf("(%2d)", comBoard[i][j]);
@@ -140,7 +125,7 @@ void play_game() {
         }
         printf("\n");
     }
-
+    */
     char path[30];
     int a;
 
@@ -148,7 +133,13 @@ void play_game() {
         sprintf(path, "Sounds/%d.mp3", i+1);
         num[i] = Sound::create(path);
     }
+    
+    /*
     printf("init start");
+    ObjectPtr com = Object::create("Images/score_0.png", scene3, 280, 496);
+    ObjectPtr me = Object::create("Images/score_0.png", scene3, 772, 496);
+    //상단에 점수 나타내는 오브젝트
+    */
 
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
@@ -158,75 +149,112 @@ void play_game() {
             my_board[i][j] = Object::create(path, scene3, index_to_x(1, j), index_to_y(i));
 
             my_board[i][j]->setOnMouseCallback([&](auto piece, auto x, auto y, auto action)->bool {
-                //if (checkPlay(myBoard, myCheck, myPlay)) {
-                for (int k = 0; k < 2; k++) {
-                    char msg[100];
-                    if (k == 0) {
-                        int myPlay1 = game_value(piece);
-                        printf("myPlay1: %d \n", myPlay1);
-                        num[myPlay1-1]->play(false);
-                        choice(myBoard, myCheck, myPlay1, piece);
-                        a = game_index(comBoard, myPlay1);
-                        choice(comBoard, comCheck, myPlay1, com_board[a / 10][a % 10]);
+                int myPlay1 = game_value(piece);
+                printf("myPlay1: %d \n", myPlay1);
+                if (checkPlay(myBoard, myCheck, myPlay1)) {
+                    for (int k = 0; k < 2; k++) {
+                        char msg[100];
+                        if (k == 0) {
 
-                        printf("myPlay2: %d \n", myPlay1);
-                    }
-                    else {
-                        comPlay = comChoice(comBoard, comCheck);
-                        Sleep(800);
-                        sprintf(msg, "컴퓨터의 차례입니다. 컴퓨터는 %d를 골랐습니다.", comPlay);
+                            num[myPlay1 - 1]->play(false);
+                            choice(myBoard, myCheck, myPlay1, piece);
+                            a = game_index(comBoard, myPlay1);
+                            choice(comBoard, comCheck, myPlay1, com_board[a / 10][a % 10]);
+
+                            printf("myPlay2: %d \n", myPlay1);
+                        }
+                        else {
+                            comPlay = comChoice(comBoard, comCheck);
+                            Sleep(800);
+                            sprintf(msg, "컴퓨터의 차례입니다. 컴퓨터는 %d를 골랐습니다.", comPlay);
+                            showMessage(msg);
+                            printf("comPlay: %d\n", comPlay);
+                            num[comPlay - 1]->play(false);
+                            a = game_index(myBoard, comPlay);
+                            choice(myBoard, myCheck, comPlay, my_board[a / 10][a % 10]);
+                            a = game_index(comBoard, comPlay);
+                            choice(comBoard, comCheck, comPlay, com_board[a / 10][a % 10]);
+                        }
+                        printf("choice finish \n");
+
+                        /*
+                        for (int i = 0; i < 5; i++) {
+                            for (int j = 0; j < 5; j++) {
+                                if (comCheck[i][j] == 1) printf("(%2d)", myBoard[i][j]);
+                                else printf(" %2d ", comBoard[i][j]); //printf("    ");
+                            }
+                            printf("          ");
+                            for (int j = 0; j < 5; j++) {
+                                if (myCheck[i][j] == 1) printf("(%2d)", myBoard[i][j]);
+                                else printf(" %2d ", myBoard[i][j]);
+                            }
+                            printf("\n");
+                        }
+                        */
+
+                        binggo(comCheck, myCheck, result);
+
+                        sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                         showMessage(msg);
-                        printf("comPlay: %d\n", comPlay);
-                        num[comPlay - 1]->play(false);
-                        a = game_index(myBoard, comPlay);
-                        choice(myBoard, myCheck, comPlay, my_board[a / 10][a % 10]);
-                        a = game_index(comBoard, comPlay);
-                        choice(comBoard, comCheck, comPlay, com_board[a / 10][a % 10]);
+
+                        /*
+                        char path2[50];
+                        sprintf(path2, "Images/score_%d.png", result[0]);
+                        printf("%s", path2);
+                        com->setImage(path2);
+                        sprintf(path2, "Images/score_%d.png", result[1]);
+                        me->setImage(path2);
+                        */
+                        printf("binggo\n");
+                        if (result[0] >= 5 || result[1] >= 5) game_end(result);
                     }
-                    printf("choice finish \n");
-
-                    for (int i = 0; i < 5; i++) {
-                        for (int j = 0; j < 5; j++) {
-                            if (comCheck[i][j] == 1) printf("(%2d)", myBoard[i][j]);
-                            else printf(" %2d ", comBoard[i][j]); //printf("    ");
-                        }
-                        printf("          ");
-                        for (int j = 0; j < 5; j++) {
-                            if (myCheck[i][j] == 1) printf("(%2d)", myBoard[i][j]);
-                            else printf(" %2d ", myBoard[i][j]);
-                        }
-                        printf("\n");
-                    }
-
-                    binggo(comCheck, myCheck, result);
-                        
-                    sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
-                    showMessage(msg);
-
-                    if (result[0] == 5 || result[1] == 5) game_end(result);
                 }
-                //}
             return true;
             });
 
-            //printf("mybutton finish");
+            
 
             //sprintf(path, "Images/%d.png", comBoard[i][j]);
             com_board[i][j] = Object::create("Images/blank.png", scene3, index_to_x(0, j), index_to_y(i));
         }
     }
     ready2->play(false);
+
+    restart = Object::create("Images/restart.png", scene3, 462, 231);
+    restart->hide();
+    restart->setOnMouseCallback([&](auto, auto, auto, auto)->bool {
+        scene1->enter();
+        restart->hide();
+
+        //값 초기화
+        for (int i = 0; i < 5;i++) {
+            for (int j = 0; j < 5;j++) {
+                myCheck[i][j] = 0;
+                comCheck[i][j] = 0;
+            }
+        }
+        result[0] = 0;
+        result[1] = 0;
+
+        return true;
+        });
+
 }
 
-void game_end(int result[2]) {
+void game_end(int result[2]) { //승자가 나왔을 때, 게임 종료 함수
     SoundPtr win = Sound::create("Sounds/게임클리어8.mp3");
     SoundPtr drew = Sound::create("Sounds/까마귀.mp3");
     SoundPtr lose = Sound::create("Sounds/야유.mp3");
 
-    if (result[0] == 5) {
-        if (result[1] == 5) {
+    if (result[0] >= 5) {
+        if (result[1] == result[0]) {
             drew->play(false);
             showMessage("비겼습니다.");
+            restart->show();
+        }
+        else if (result[0] < result[1]) {
+            win->play(false);
+            showMessage("당신이 이겼습니다!");
             restart->show();
         }
         else {
@@ -397,47 +425,57 @@ int comChoice(int comBoard[5][5], char comCheck[5][5]) {
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 11:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][4 - randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 2:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[2][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 7:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][2];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 1:
             case 3:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[index][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 6:
             case 8:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][index - 5];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 0:
             case 4:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[index][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             case 5:
             case 9:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][index - 5];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
+                    printf("%d", index);
                 }
             }
         }
     }
+    comPlay = comChoice(comBoard, comCheck);
+    return comPlay;
 }
