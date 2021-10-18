@@ -164,7 +164,11 @@ void play_game() { //게임의 메인이 되는 함수
                             printf("myPlay2: %d \n", myPlay1);
                         }
                         else {
-                            comPlay = comChoice(comBoard, comCheck);
+                            while (1) {
+                                comPlay = comChoice(comBoard, comCheck);
+                                if (comPlay <= 25) break;
+                            }
+                            
                             Sleep(800);
                             sprintf(msg, "컴퓨터의 차례입니다. 컴퓨터는 %d를 골랐습니다.", comPlay);
                             showMessage(msg);
@@ -193,7 +197,7 @@ void play_game() { //게임의 메인이 되는 함수
                         */
 
                         binggo(comCheck, myCheck, result);
-
+                        printf("<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                         sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                         showMessage(msg);
 
@@ -206,7 +210,10 @@ void play_game() { //게임의 메인이 되는 함수
                         me->setImage(path2);
                         */
                         printf("binggo\n");
-                        if (result[0] >= 5 || result[1] >= 5) game_end(result);
+                        if (result[0] >= 5 || result[1] >= 5) {
+                            game_end(result);
+                            return true;
+                        }
                     }
                 }
             return true;
@@ -418,64 +425,55 @@ int comChoice(int comBoard[5][5], char comCheck[5][5]) {
         randint = rand() % 2;
 
         for (int i = 0; i < 12; i++) {
-            //printf("%d ", checklist[i]);
+            printf("%d ", checklist[i]);
             int index = checklist[i] % 100;
+            printf("index: %d \n", index);
             switch (index) {
             case 10:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 11:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][4 - randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 2:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[2][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 7:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][2];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 1:
             case 3:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[index][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 6:
             case 8:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][index - 5];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 0:
             case 4:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[index][randlist[randint][j]];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             case 5:
             case 9:
                 for (int j = 0; j < 5; j++) {
                     comPlay = comBoard[randlist[randint][j]][index - 5];
                     if (checkPlay(comBoard, comCheck, comPlay)) return comPlay;
-                    printf("%d", index);
                 }
             }
         }
     }
-    comPlay = comChoice(comBoard, comCheck);
-    return comPlay;
 }
