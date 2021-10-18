@@ -4,6 +4,7 @@
 using namespace bangtal;
 
 #include <stdio.h>
+#include <Windows.h>
 
 #include <cstdlib>
 #include <ctime>
@@ -94,12 +95,21 @@ int comBoard[5][5];
 char comCheck[5][5] = { {0, } }, myCheck[5][5] = { {0, } };
 int result[2] = { 0, 0 };
 int comPlay, myPlay;
-int a, b;
 
 int game_value(ObjectPtr piece) {
     for (int i = 0; i < 5;i++) {
         for (int j = 0; j < 5;j++) {
             if (my_board[i][j] == piece) return myBoard[i][j];
+        }
+    }
+
+    return -1; //INVALID PIECE
+}
+
+int game_index(int board[5][5], int play) {
+    for (int i = 0; i < 5;i++) {
+        for (int j = 0; j < 5;j++) {
+            if (board[i][j] == play) return i*10+j;
         }
     }
 
@@ -132,6 +142,7 @@ void play_game() {
     }
 
     char path[30];
+    int a;
 
     for (int i = 0; i < 25; i++) {
         sprintf(path, "Sounds/%d.mp3", i+1);
@@ -144,8 +155,8 @@ void play_game() {
             myPlay = myBoard[i][j];
             //printf("myPlay: %d \n", myPlay);
             sprintf(path, "Images/%d.png", myPlay);
-            
             my_board[i][j] = Object::create(path, scene3, index_to_x(1, j), index_to_y(i));
+
             my_board[i][j]->setOnMouseCallback([&](auto piece, auto x, auto y, auto action)->bool {
                 //if (checkPlay(myBoard, myCheck, myPlay)) {
                 for (int k = 0; k < 2; k++) {
@@ -153,19 +164,24 @@ void play_game() {
                     if (k == 0) {
                         int myPlay1 = game_value(piece);
                         printf("myPlay1: %d \n", myPlay1);
-
-                        //num[myPlay-1]->play(false);
+                        num[myPlay1-1]->play(false);
                         choice(myBoard, myCheck, myPlay1, piece);
-                        choice(comBoard, comCheck, myPlay1, piece);
+                        a = game_index(comBoard, myPlay1);
+                        choice(comBoard, comCheck, myPlay1, com_board[a / 10][a % 10]);
 
                         printf("myPlay2: %d \n", myPlay1);
                     }
                     else {
                         comPlay = comChoice(comBoard, comCheck);
+                        Sleep(800);
                         sprintf(msg, "컴퓨터의 차례입니다. 컴퓨터는 %d를 골랐습니다.", comPlay);
                         showMessage(msg);
                         printf("comPlay: %d\n", comPlay);
-                        choice(myBoard, myCheck, comPlay, piece);
+                        num[comPlay - 1]->play(false);
+                        a = game_index(myBoard, comPlay);
+                        choice(myBoard, myCheck, comPlay, my_board[a / 10][a % 10]);
+                        a = game_index(comBoard, comPlay);
+                        choice(comBoard, comCheck, comPlay, com_board[a / 10][a % 10]);
                     }
                     printf("choice finish \n");
 
@@ -183,7 +199,6 @@ void play_game() {
                     }
 
                     binggo(comCheck, myCheck, result);
-
                         
                     sprintf(msg, "<현재 점수> 컴퓨터(왼쪽): %d줄 나(오른쪽): %d줄", result[0], result[1]);
                     showMessage(msg);
@@ -196,7 +211,8 @@ void play_game() {
 
             //printf("mybutton finish");
 
-            com_board[i][j] = Object::create("Images/%d.png", scene3, index_to_x(0, j), index_to_y(i));
+            //sprintf(path, "Images/%d.png", comBoard[i][j]);
+            com_board[i][j] = Object::create("Images/blank.png", scene3, index_to_x(0, j), index_to_y(i));
         }
     }
     ready2->play(false);
@@ -299,11 +315,11 @@ void choice(int board[5][5], char check[5][5], int play, ObjectPtr piece) {
             }
         }
     }
+
     char path[50];
     sprintf(path, "Images/%d - 복사본.png", play);
     printf("myPlay3: %d \n", play);
     piece->setImage(path);
-
 
     check[index[0]][index[1]] = 1;
 
